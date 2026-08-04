@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync/atomic"
 )
@@ -18,9 +20,9 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	message := fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())
+	message := fmt.Sprintf("<html><body><h1>Welcome, Chirpy Admin</h1><p>Chirpy has been visited %d times!</p></body></html>", cfg.fileserverHits.Load())
 	w.Write([]byte(message))
 }
 
@@ -38,6 +40,65 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("\"OK\" (the text associated with the 200 status code)"))
 }
 
+func erroMessageHandler(w http.ResponseWriter, status int, message string) {
+
+	type errorResponse struct {
+		ErrorMessage string `json:"error"`
+	}
+
+	msg := errorResponse{
+		ErrorMessage: message,
+	}
+
+	m, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-TYpe", "application/json")
+	w.WriteHeader(status)
+	w.Write(m)
+}
+
+func validateHandler(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	type resp struct {
+		Valid bool `json:"valid"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		erroMessageHandler(w, 500, "something went wrong")
+		return
+	}
+
+	if len(params.Body) > 140 {
+		erroMessageHandler(w, 400, "Chirp is too long")
+		return
+	}
+
+	response := resp{
+		Valid: true,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
 func main() {
 	mux := http.NewServeMux()
 	srv := &http.Server{
@@ -48,8 +109,9 @@ func main() {
 	apiCfg := apiConfig{}
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
-	mux.HandleFunc("POST /api/reset", apiCfg.resetHandler)
-	mux.HandleFunc("GET /api/metrics", apiCfg.metricsHandler)
+	mux.HandleFunc("POST /api/validate_chirp", validateHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	mux.Handle("/app/", http.StripPrefix("/app/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
 	srv.ListenAndServe()
 }
