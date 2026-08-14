@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -68,7 +69,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type resp struct {
-		Valid bool `json:"valid"`
+		Valid string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -84,8 +85,10 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cleanedBody := profaneHandler(params.Body)
+
 	response := resp{
-		Valid: true,
+		Valid: cleanedBody,
 	}
 
 	data, err := json.Marshal(response)
@@ -97,6 +100,27 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
+}
+
+func profaneHandler(message string) string {
+
+	type resp struct {
+		Data string
+	}
+
+	profaneListy := []string{"kerfuffle", "sharbert", "fornax"}
+	iterMessage := strings.Split(message, " ")
+	for i, msg := range iterMessage {
+		for _, profanity := range profaneListy {
+			lowerMsg := strings.ToLower(msg)
+			lowerPrfn := strings.ToLower(profanity)
+			if lowerMsg == lowerPrfn {
+				iterMessage[i] = "****"
+			}
+		}
+	}
+	censored := strings.Join(iterMessage, " ")
+	return censored
 }
 
 func main() {
