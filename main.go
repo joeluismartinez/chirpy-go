@@ -1,12 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
+
+	"github.com/joeluismartinez/chirpy-go/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
@@ -50,8 +55,8 @@ func erroMessageHandler(w http.ResponseWriter, status int, message string) {
 	msg := errorResponse{
 		ErrorMessage: message,
 	}
-
 	m, err := json.Marshal(msg)
+	
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -75,6 +80,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
+	
 	if err != nil {
 		erroMessageHandler(w, 500, "something went wrong")
 		return
@@ -90,8 +96,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	response := resp{
 		Valid: cleanedBody,
 	}
-
 	data, err := json.Marshal(response)
+	
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -103,7 +109,6 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func profaneHandler(message string) string {
-
 	type resp struct {
 		Data string
 	}
@@ -124,6 +129,14 @@ func profaneHandler(message string) string {
 }
 
 func main() {
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Errorf("DB is fucked up")
+	}
+	dbQueries := database.New(db)
+	fmt.Print(dbQueries)
+
 	mux := http.NewServeMux()
 	srv := &http.Server{
 		Addr:    ":8080",
