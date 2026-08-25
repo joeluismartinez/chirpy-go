@@ -9,13 +9,24 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joeluismartinez/chirpy-go/internal/database"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	dbQueries      *database.Queries
+}
+
+type userResponse struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -40,6 +51,46 @@ func (cfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(message))
 }
 
+func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
+	type email struct {
+		Email string `json:"email"`
+	}
+
+	req := email{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	insertNewUser, err := cfg.dbQueries.CreateUser(r.Context(), req.Email)
+	if err != nil {
+		log.Printf("Error creating user.", err)
+		return
+	}
+
+	response := userResponse{
+		ID:        insertNewUser.ID,
+		CreatedAt: insertNewUser.CreatedAt,
+		UpdatedAt: insertNewUser.UpdatedAt,
+		Email:     insertNewUser.Email,
+	}
+
+	data, err := json.Marshal(response)
+
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(data)
+
+}
+
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -56,7 +107,7 @@ func erroMessageHandler(w http.ResponseWriter, status int, message string) {
 		ErrorMessage: message,
 	}
 	m, err := json.Marshal(msg)
-	
+
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -80,7 +131,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
-	
+
 	if err != nil {
 		erroMessageHandler(w, 500, "something went wrong")
 		return
@@ -97,7 +148,7 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 		Valid: cleanedBody,
 	}
 	data, err := json.Marshal(response)
-	
+
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -129,11 +180,19 @@ func profaneHandler(message string) string {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
+	
 	if err != nil {
 		fmt.Errorf("DB is fucked up")
+		return
 	}
+	
 	dbQueries := database.New(db)
 	fmt.Print(dbQueries)
 
@@ -143,10 +202,13 @@ func main() {
 		Handler: mux,
 	}
 
-	apiCfg := apiConfig{}
+	apiCfg := apiConfig{
+		dbQueries: dbQueries,
+	}
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
 	mux.HandleFunc("POST /api/validate_chirp", validateHandler)
+	mux.HandleFunc("POST /api/users", apiCfg.createUser)
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	mux.Handle("/app/", http.StripPrefix("/app/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
