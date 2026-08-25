@@ -166,10 +166,6 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func profaneHandler(message string) string {
-	type resp struct {
-		Data string
-	}
-
 	profaneListy := []string{"kerfuffle", "sharbert", "fornax"}
 	iterMessage := strings.Split(message, " ")
 	for i, msg := range iterMessage {
