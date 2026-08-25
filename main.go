@@ -20,6 +20,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
+	platform       string
 }
 
 type userResponse struct {
@@ -44,6 +45,11 @@ func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	cfg.dbQueries.DeleteUsers(r.Context())
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	message := fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())
@@ -184,17 +190,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	
+
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
-	
+
 	if err != nil {
 		fmt.Errorf("DB is fucked up")
 		return
 	}
-	
+
 	dbQueries := database.New(db)
-	fmt.Print(dbQueries)
 
 	mux := http.NewServeMux()
 	srv := &http.Server{
@@ -204,6 +209,7 @@ func main() {
 
 	apiCfg := apiConfig{
 		dbQueries: dbQueries,
+		platform:  os.Getenv("PLATFORM"),
 	}
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
