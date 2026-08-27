@@ -125,43 +125,63 @@ func erroMessageHandler(w http.ResponseWriter, status int, message string) {
 	w.Write(m)
 }
 
-func validateHandler(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
+func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
+	type request struct {
+		Body   string    `json:"body"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 
-	type resp struct {
-		Valid string `json:"cleaned_body"`
+	type response struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		UserID    uuid.UUID `json:"user_id"`
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
+	req := request{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		erroMessageHandler(w, http.StatusBadRequest, "Invalid request")
+		return
+	}
+	
+	if req.UserID == uuid.Nil {
+		erroMessageHandler(w, http.StatusBadRequest, "Invalid request")
+		return
+	}
 
+	if len(req.Body) > 140 {
+		erroMessageHandler(w, http.StatusBadRequest, "Chirp is too long")
+		return
+	}
+
+	chirp, err := cfg.dbQueries.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body:   profaneHandler(req.Body),
+		UserID: req.UserID,
+	})
 	if err != nil {
-		erroMessageHandler(w, 500, "something went wrong")
+		log.Printf("Error creating chirp: %s", err)
+		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
 
-	if len(params.Body) > 140 {
-		erroMessageHandler(w, 400, "Chirp is too long")
-		return
+	resp := response{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
 	}
 
-	cleanedBody := profaneHandler(params.Body)
-
-	response := resp{
-		Valid: cleanedBody,
-	}
-	data, err := json.Marshal(response)
-
+	data, err := json.Marshal(resp)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(data)
 }
 
@@ -209,7 +229,7 @@ func main() {
 	}
 
 	mux.HandleFunc("GET /api/healthz", healthHandler)
-	mux.HandleFunc("POST /api/validate_chirp", validateHandler)
+	mux.HandleFunc("POST /api/chirps", apiCfg.createChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.createUser)
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
