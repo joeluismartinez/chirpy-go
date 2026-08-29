@@ -97,6 +97,53 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
+	pathId := r.PathValue("id")
+	id, err := uuid.Parse(pathId)
+	if err != nil {
+		erroMessageHandler(w, http.StatusBadRequest, "Invalid chirp ID")
+		return
+	}
+
+	type response struct {
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Body      string    `json:"body"`
+		UserID    uuid.UUID `json:"user_id"`
+	}
+
+	chirp, err := cfg.dbQueries.GetChirp(r.Context(), id)
+	if err != nil {
+		log.Printf("Error retrieving Chirp. Please double check the ID.", err)
+		return
+	}
+
+	if chirp ==  {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	res := response{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		UserID:    chirp.UserID,
+	}
+
+	data, err := json.Marshal(res)
+
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
 func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
 	type response struct {
 		ID        uuid.UUID `json:"id"`
@@ -183,7 +230,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		erroMessageHandler(w, http.StatusBadRequest, "Invalid request")
 		return
 	}
-	
+
 	if req.UserID == uuid.Nil {
 		erroMessageHandler(w, http.StatusBadRequest, "Invalid request")
 		return
@@ -270,6 +317,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", healthHandler)
 	mux.HandleFunc("POST /api/chirps", apiCfg.createChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.getChirps)
+	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.getChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.createUser)
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
