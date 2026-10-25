@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -115,12 +116,12 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 
 	chirp, err := cfg.dbQueries.GetChirp(r.Context(), id)
 	if err != nil {
-		log.Printf("Error retrieving Chirp. Please double check the ID.", err)
-		return
-	}
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "chirp not found!", http.StatusNotFound)
+			return
+		}
 
-	if chirp ==  {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "There was an error!", http.StatusBadRequest)
 		return
 	}
 
@@ -129,6 +130,7 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
 		UserID:    chirp.UserID,
+		Body:      chirp.Body,
 	}
 
 	data, err := json.Marshal(res)
@@ -245,6 +247,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		Body:   profaneHandler(req.Body),
 		UserID: req.UserID,
 	})
+
 	if err != nil {
 		log.Printf("Error creating chirp: %s", err)
 		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
