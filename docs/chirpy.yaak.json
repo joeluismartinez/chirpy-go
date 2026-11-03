@@ -1,0 +1,571 @@
+{
+  "yaakVersion": "0.1.0",
+  "yaakSchema": 4,
+  "timestamp": "2026-10-04T11:50:06.870169",
+  "resources": {
+    "workspaces": [
+      {
+        "model": "workspace",
+        "id": "wk_PLukoQxY7E",
+        "createdAt": "2026-10-04T11:48:42.814015",
+        "updatedAt": "2026-10-04T11:48:42.814015",
+        "authentication": {},
+        "authenticationType": null,
+        "description": "Requests generated from main.go and SQL handlers. Local server: http://localhost:8080. No authentication is implemented. Create a user, set user_id, create a chirp, then set chirp_id. Admin reset deletes users and cascades to chirps; send it only deliberately. Documentation and backup: chirpy-go/docs/.",
+        "headers": [],
+        "name": "Chirpy Go (Boot.dev)",
+        "encryptionKeyChallenge": null,
+        "settingValidateCertificates": true,
+        "settingFollowRedirects": true,
+        "settingRequestTimeout": 0,
+        "settingRequestMessageSize": 67108864,
+        "settingDnsOverrides": [],
+        "settingSendCookies": true,
+        "settingStoreCookies": true,
+        "settingHttpVersion": "auto"
+      }
+    ],
+    "environments": [
+      {
+        "model": "environment",
+        "id": "ev_HrQgnAQCMJ",
+        "workspaceId": "wk_PLukoQxY7E",
+        "createdAt": "2026-10-04T11:50:06.454643",
+        "updatedAt": "2026-10-04T11:50:06.454643",
+        "name": "Local",
+        "public": true,
+        "base": true,
+        "parentModel": "workspace",
+        "parentId": "wk_PLukoQxY7E",
+        "variables": [
+          {
+            "enabled": true,
+            "name": "base_url",
+            "value": "http://localhost:8080",
+            "id": null
+          },
+          {
+            "enabled": true,
+            "name": "email",
+            "value": "learner@example.com",
+            "id": null
+          },
+          {
+            "enabled": true,
+            "name": "user_id",
+            "value": "",
+            "id": null
+          },
+          {
+            "enabled": true,
+            "name": "chirp_id",
+            "value": "",
+            "id": null
+          },
+          {
+            "enabled": true,
+            "name": "chirp_body",
+            "value": "Hello from Yaak!",
+            "id": null
+          }
+        ],
+        "color": null,
+        "sortPriority": 0.0
+      }
+    ],
+    "folders": [
+      {
+        "model": "folder",
+        "id": "fl_jBq8h9Gftp",
+        "createdAt": "2026-10-04T11:50:06.558880",
+        "updatedAt": "2026-10-04T11:50:06.558880",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": null,
+        "authentication": {},
+        "authenticationType": null,
+        "description": "",
+        "headers": [],
+        "name": "Admin - destructive reset included",
+        "sortPriority": 0.0,
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingRequestMessageSize": {
+          "enabled": false,
+          "value": 67108864
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "folder",
+        "id": "fl_o2Kxvbvrvu",
+        "createdAt": "2026-10-04T11:50:06.525067",
+        "updatedAt": "2026-10-04T11:50:06.525067",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": null,
+        "authentication": {},
+        "authenticationType": null,
+        "description": "",
+        "headers": [],
+        "name": "App",
+        "sortPriority": 0.0,
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingRequestMessageSize": {
+          "enabled": false,
+          "value": 67108864
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "folder",
+        "id": "fl_z3VdsEtwTp",
+        "createdAt": "2026-10-04T11:50:06.490620",
+        "updatedAt": "2026-10-04T11:50:06.490620",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": null,
+        "authentication": {},
+        "authenticationType": null,
+        "description": "",
+        "headers": [],
+        "name": "API",
+        "sortPriority": 0.0,
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingRequestMessageSize": {
+          "enabled": false,
+          "value": 67108864
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      }
+    ],
+    "httpRequests": [
+      {
+        "model": "http_request",
+        "id": "rq_8p2pe44aiV",
+        "createdAt": "2026-10-04T11:50:06.835105",
+        "updatedAt": "2026-10-04T11:50:06.835106",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_jBq8h9Gftp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "DESTRUCTIVE: deletes ALL users, which cascades to ALL chirps via the foreign key, and clears the visit counter. Only allowed when server PLATFORM=dev; otherwise returns 403 with an empty body. On success returns 200 text/plain; charset=utf-8 with Hits: <previous count>. No request body or authentication. Current handler ignores database deletion errors, so 200 does not guarantee deletion succeeded. Never include this request in an indiscriminate workspace/folder send. Source: main.go resetHandler; sql/queries/users.sql; sql/schema/20260826010121_chirps.sql.",
+        "headers": [],
+        "method": "POST",
+        "name": "DESTRUCTIVE - delete users and chirps, reset counter",
+        "sortPriority": 7.0,
+        "url": "${[ base_url ]}/admin/reset",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_hWUxfu3rmi",
+        "createdAt": "2026-10-04T11:50:06.801233",
+        "updatedAt": "2026-10-04T11:50:06.801233",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_jBq8h9Gftp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "Returns 200 text/html; charset=utf-8 with the current /app/ request count. The counter is held in memory and resets on server restart. This endpoint does not itself increment the counter. Source: main.go metricsHandler.",
+        "headers": [],
+        "method": "GET",
+        "name": "Visit metrics",
+        "sortPriority": 6.0,
+        "url": "${[ base_url ]}/admin/metrics",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_5JCA6PackT",
+        "createdAt": "2026-10-04T11:50:06.766005",
+        "updatedAt": "2026-10-04T11:50:06.766005",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_o2Kxvbvrvu",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "Representative request for the /app/ file server prefix. Serves index.html from the server working directory, normally 200 text/html. Every request through this prefix increments the visit counter, including asset and missing-file requests. /app/assets/logo.png is another valid example. Missing files return 404. The prefix is registered without a method restriction; this collection uses GET for normal browsing. Source: main.go route registration and middlewareMetricsInc.",
+        "headers": [],
+        "method": "GET",
+        "name": "App index",
+        "sortPriority": 5.0,
+        "url": "${[ base_url ]}/app/",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_Sebd93m8br",
+        "createdAt": "2026-10-04T11:50:06.731421",
+        "updatedAt": "2026-10-04T11:50:06.731422",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_z3VdsEtwTp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "Route: GET /api/chirps/{id}. Set Local chirp_id to a UUID returned by Create chirp. Success: 200 JSON with id, created_at, updated_at, body, user_id. Current handler omits assignment of body, so the returned body is an empty string. Invalid UUID: 400 {\"error\":\"Invalid chirp ID\"}. Missing record or database failure currently logs an error and returns an empty default 200, rather than 404/500. Source: main.go getChirp; sql/queries/chirps.sql.",
+        "headers": [],
+        "method": "GET",
+        "name": "Get chirp by ID",
+        "sortPriority": 4.0,
+        "url": "${[ base_url ]}/api/chirps/${[ chirp_id ]}",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_DhoHtqz7Ud",
+        "createdAt": "2026-10-04T11:50:06.695997",
+        "updatedAt": "2026-10-04T11:50:06.695997",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_z3VdsEtwTp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "Returns 200 JSON array ordered by created_at ascending. Each item has id, created_at, updated_at, body, user_id. Empty result is []. Database errors: 500 {\"error\":\"something went wrong\"}. No pagination or filters are implemented. Source: main.go getChirps; sql/queries/chirps.sql.",
+        "headers": [],
+        "method": "GET",
+        "name": "List chirps",
+        "sortPriority": 3.0,
+        "url": "${[ base_url ]}/api/chirps",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_oBA2wRJTur",
+        "createdAt": "2026-10-04T11:50:06.662413",
+        "updatedAt": "2026-10-04T11:50:06.662413",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_z3VdsEtwTp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {
+          "text": "{\n  \"body\": \"${[ chirp_body ]}\",\n  \"user_id\": \"${[ user_id ]}\"\n}"
+        },
+        "bodyType": "application/json",
+        "description": "Requires an existing user_id UUID. Send JSON with body and user_id. Set Local user_id from Create user before sending. Body length must be at most 140 bytes, as checked by Go len(string). Empty body is currently accepted. Space-separated words kerfuffle, sharbert and fornax are replaced by **** case-insensitively. Success: 201 JSON with id, created_at, updated_at, body, user_id. Copy id into Local chirp_id. Invalid JSON/UUID or zero UUID: 400 {\"error\":\"Invalid request\"}; oversized body: 400 {\"error\":\"Chirp is too long\"}; database errors, including nonexistent user: 500 {\"error\":\"something went wrong\"}. Source: main.go createChirp and profaneHandler; sql/queries/chirps.sql.",
+        "headers": [
+          {
+            "enabled": true,
+            "name": "Content-Type",
+            "value": "application/json",
+            "id": null
+          }
+        ],
+        "method": "POST",
+        "name": "Create chirp",
+        "sortPriority": 2.0,
+        "url": "${[ base_url ]}/api/chirps",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_UQdvhCNtsP",
+        "createdAt": "2026-10-04T11:50:06.628067",
+        "updatedAt": "2026-10-04T11:50:06.628067",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_z3VdsEtwTp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {
+          "text": "{\n  \"email\": \"${[ email ]}\"\n}"
+        },
+        "bodyType": "application/json",
+        "description": "Creates a user from JSON {\"email\":\"...\"}. Email has a UNIQUE database constraint; use a fresh email for repeated creation. Success: 201 JSON with id, created_at, updated_at, email. Copy id into the Local user_id variable. Malformed JSON: 400 plain text Invalid JSON. Current handler logs database errors but returns an empty default 200; do not interpret that as successful creation. No email-format validation is implemented. Source: main.go createUser; sql/queries/users.sql; sql/schema/001_users.sql.",
+        "headers": [
+          {
+            "enabled": true,
+            "name": "Content-Type",
+            "value": "application/json",
+            "id": null
+          }
+        ],
+        "method": "POST",
+        "name": "Create user",
+        "sortPriority": 1.0,
+        "url": "${[ base_url ]}/api/users",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      },
+      {
+        "model": "http_request",
+        "id": "rq_tv9e5Y4KS9",
+        "createdAt": "2026-10-04T11:50:06.593283",
+        "updatedAt": "2026-10-04T11:50:06.593283",
+        "workspaceId": "wk_PLukoQxY7E",
+        "folderId": "fl_z3VdsEtwTp",
+        "authentication": {},
+        "authenticationType": null,
+        "body": {},
+        "bodyType": null,
+        "description": "Returns 200 with text/plain; charset=utf-8. Current body: \"OK\" (the text associated with the 200 status code). Does not check database connectivity. Source: main.go healthHandler.",
+        "headers": [],
+        "method": "GET",
+        "name": "Health check",
+        "sortPriority": 0.0,
+        "url": "${[ base_url ]}/api/healthz",
+        "urlParameters": [],
+        "settingSendCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingStoreCookies": {
+          "enabled": false,
+          "value": true
+        },
+        "settingValidateCertificates": {
+          "enabled": false,
+          "value": true
+        },
+        "settingFollowRedirects": {
+          "enabled": false,
+          "value": true
+        },
+        "settingRequestTimeout": {
+          "enabled": false,
+          "value": 0
+        },
+        "settingHttpVersion": {
+          "enabled": false,
+          "value": "auto"
+        }
+      }
+    ],
+    "grpcRequests": [],
+    "websocketRequests": []
+  }
+}

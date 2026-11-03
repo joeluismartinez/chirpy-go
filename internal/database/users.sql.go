@@ -12,7 +12,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, email, created_at, updated_at)
 VALUES (gen_random_uuid(), $1, now(), now())
-RETURNING id, email, created_at, updated_at
+RETURNING id, email, created_at, updated_at, hashed_password
 `
 
 func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
@@ -23,6 +23,7 @@ func (q *Queries) CreateUser(ctx context.Context, email string) (User, error) {
 		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HashedPassword,
 	)
 	return i, err
 }

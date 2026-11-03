@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joeluismartinez/chirpy-go/internal/auth"
 	"github.com/joeluismartinez/chirpy-go/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -29,6 +30,14 @@ type userResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+}
+
+type chirpResponse struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -60,20 +69,24 @@ func (cfg *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	type email struct {
-		Email string `json:"email"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
 	req := email{}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		erroMessageHandler(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
 
+	auth.HashPassword(req.Password)
+
 	insertNewUser, err := cfg.dbQueries.CreateUser(r.Context(), req.Email)
 	if err != nil {
-		log.Printf("Error creating user.", err)
+		log.Printf("Error creating user: %s", err)
+		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
 		return
 	}
 
@@ -84,18 +97,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		Email:     insertNewUser.Email,
 	}
 
-	data, err := json.Marshal(response)
-
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(data)
-
+	respondJSON(w, http.StatusCreated, response)
 }
 
 func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
@@ -106,26 +108,18 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type response struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body      string    `json:"body"`
-		UserID    uuid.UUID `json:"user_id"`
-	}
-
 	chirp, err := cfg.dbQueries.GetChirp(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, "chirp not found!", http.StatusNotFound)
+			erroMessageHandler(w, http.StatusNotFound, "chirp not found!")
 			return
 		}
 
-		http.Error(w, "There was an error!", http.StatusBadRequest)
+		erroMessageHandler(w, http.StatusBadRequest, "There was an error!")
 		return
 	}
 
-	res := response{
+	res := chirpResponse{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
@@ -133,28 +127,10 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
 		Body:      chirp.Body,
 	}
 
-	data, err := json.Marshal(res)
-
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	respondJSON(w, http.StatusOK, res)
 }
 
 func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
-	type response struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body      string    `json:"body"`
-		UserID    uuid.UUID `json:"user_id"`
-	}
-
 	chirps, err := cfg.dbQueries.GetChirps(r.Context())
 	if err != nil {
 		log.Printf("Error getting chirps: %s", err)
@@ -162,9 +138,9 @@ func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := []response{}
+	resp := []chirpResponse{}
 	for _, chirp := range chirps {
-		resp = append(resp, response{
+		resp = append(resp, chirpResponse{
 			ID:        chirp.ID,
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
@@ -173,16 +149,7 @@ func (cfg *apiConfig) getChirps(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	data, err := json.Marshal(resp)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	respondJSON(w, http.StatusOK, resp)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,40 +158,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("\"OK\" (the text associated with the 200 status code)"))
 }
 
-func erroMessageHandler(w http.ResponseWriter, status int, message string) {
-
-	type errorResponse struct {
-		ErrorMessage string `json:"error"`
-	}
-
-	msg := errorResponse{
-		ErrorMessage: message,
-	}
-	m, err := json.Marshal(msg)
-
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-TYpe", "application/json")
-	w.WriteHeader(status)
-	w.Write(m)
-}
-
 func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 	type request struct {
 		Body   string    `json:"body"`
 		UserID uuid.UUID `json:"user_id"`
-	}
-
-	type response struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Body      string    `json:"body"`
-		UserID    uuid.UUID `json:"user_id"`
 	}
 
 	req := request{}
@@ -254,7 +191,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := response{
+	resp := chirpResponse{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
 		UpdatedAt: chirp.UpdatedAt,
@@ -262,16 +199,7 @@ func (cfg *apiConfig) createChirp(w http.ResponseWriter, r *http.Request) {
 		UserID:    chirp.UserID,
 	}
 
-	data, err := json.Marshal(resp)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(data)
+	respondJSON(w, http.StatusCreated, resp)
 }
 
 func profaneHandler(message string) string {
@@ -300,8 +228,7 @@ func main() {
 	db, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
-		fmt.Errorf("DB is fucked up")
-		return
+		log.Fatalf("Error opening database: %s", err)
 	}
 
 	dbQueries := database.New(db)
