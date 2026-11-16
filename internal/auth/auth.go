@@ -2,6 +2,8 @@ package auth
 
 import (
 	"fmt"
+	"time"
+	"uuid"
 
 	"github.com/alexedwards/argon2id"
 )
@@ -20,4 +22,8 @@ func CheckPasswordHash(pwd, hash string) (bool, error) {
 		return false, fmt.Errorf("Hash out of sync: %w", err)
 	}
 	return check, nil
+}
+
+func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+
 }

@@ -81,9 +81,18 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth.HashPassword(req.Password)
+	hashedPwd, err := auth.HashPassword(req.Password)
 
-	insertNewUser, err := cfg.dbQueries.CreateUser(r.Context(), req.Email)
+	if err != nil {
+		log.Printf("Error creating hash: %s", err)
+		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+
+	insertNewUser, err := cfg.dbQueries.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          req.Email,
+		HashedPassword: hashedPwd,
+	})
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		erroMessageHandler(w, http.StatusInternalServerError, "something went wrong")
@@ -98,6 +107,49 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusCreated, response)
+}
+
+func (cfg *apiConfig) loginUser(w http.ResponseWriter, r *http.Request) {
+	type user struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	req := user{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		erroMessageHandler(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	storedPassword, err := cfg.dbQueries.GetUserPassword(r.Context(), req.Email)
+	if err != nil {
+		log.Printf("Error logging in: %s", err)
+		erroMessageHandler(w, http.StatusInternalServerError, "Error retrieving password!")
+	}
+
+	match, err := auth.CheckPasswordHash(req.Password, storedPassword.HashedPassword)
+
+	if err != nil {
+		log.Printf("Error in matching passwords: %s", err)
+		erroMessageHandler(w, http.StatusUnauthorized, "Passwords do not match!")
+		return
+	}
+
+	response := userResponse{
+		ID:        storedPassword.ID,
+		CreatedAt: storedPassword.CreatedAt,
+		UpdatedAt: storedPassword.UpdatedAt,
+		Email:     storedPassword.Email,
+	}
+
+	if match {
+		respondJSON(w, http.StatusOK, response)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
 }
 
 func (cfg *apiConfig) getChirp(w http.ResponseWriter, r *http.Request) {
@@ -249,6 +301,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", apiCfg.getChirps)
 	mux.HandleFunc("GET /api/chirps/{id}", apiCfg.getChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.createUser)
+	mux.HandleFunc("POST /api/login", apiCfg.loginUser)
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	mux.Handle("/app/", http.StripPrefix("/app/", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
